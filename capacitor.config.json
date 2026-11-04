@@ -1,0 +1,6 @@
+{
+  "appId": "com.asuncion.chess",
+  "appName": "ASUNCION CHESS 3D",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

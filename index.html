@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101a20" />
+    <meta name="description" content="ASUNCION CHESS 3D - Play chess against the computer." />
+    <title>ASUNCION CHESS 3D</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="topbar">
+        <div class="brand-mark">A<span>♞</span></div>
+        <div class="brand-copy">
+          <div class="eyebrow">STRATEGY • FOCUS • VICTORY</div>
+          <h1>ASUNCION <span>CHESS 3D</span></h1>
+        </div>
+        <div class="live-pill"><i></i> OFFLINE READY</div>
+      </header>
+
+      <main class="layout">
+        <section class="game-panel">
+          <div class="game-heading">
+            <div>
+              <div class="eyebrow">CLASSIC MODE</div>
+              <h2>Play vs Computer</h2>
+            </div>
+            <div class="level-pill">AI • STANDARD</div>
+          </div>
+
+          <div class="player-row opponent-row">
+            <div class="avatar ai-avatar">♚</div>
+            <div class="player-meta">
+              <strong>COMPUTER</strong>
+              <span>White pieces</span>
+            </div>
+            <div class="turn-tag" id="computer-turn">THINKING</div>
+          </div>
+
+          <div class="board-stage">
+            <div class="board-shadow"></div>
+            <div class="chessboard" id="board" aria-label="Chessboard"></div>
+          </div>
+
+          <div class="player-row user-row">
+            <div class="avatar user-avatar">♟</div>
+            <div class="player-meta">
+              <strong>YOU</strong>
+              <span>Black pieces</span>
+            </div>
+            <div class="turn-tag active" id="player-turn">YOUR TURN</div>
+          </div>
+
+          <div class="status-card">
+            <div class="status-icon" id="status-icon">♟</div>
+            <div class="status-copy">
+              <strong id="status-title">Computer is making the first move</strong>
+              <span id="status-text">You are playing as Black. Good luck!</span>
+            </div>
+            <div class="thinking-dots" id="thinking-dots"><b></b><b></b><b></b></div>
+          </div>
+
+          <div class="controls">
+            <button class="control-btn primary" id="new-game"><span>↻</span> New Game</button>
+            <button class="control-btn" id="undo"><span>↶</span> Undo</button>
+            <button class="control-btn" id="flip"><span>⇅</span> Flip Board</button>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="info-card">
+            <div class="card-title"><span class="title-icon">♜</span> GAME STATUS</div>
+            <div class="stat-line"><span>Side to move</span><strong id="side-to-move">White</strong></div>
+            <div class="stat-line"><span>Move number</span><strong id="move-number">1</strong></div>
+            <div class="stat-line"><span>Game result</span><strong id="game-result">In progress</strong></div>
+          </section>
+
+          <section class="info-card history-card">
+            <div class="card-title"><span class="title-icon">☷</span> MOVE HISTORY</div>
+            <div class="move-list" id="move-list">
+              <div class="empty-history">Moves will appear here.</div>
+            </div>
+          </section>
+
+          <section class="tip-card">
+            <div class="tip-symbol">✦</div>
+            <div>
+              <strong>YOUR MISSION</strong>
+              <p>Protect your king, control the center, and checkmate the computer.</p>
+            </div>
+          </section>
+          <div class="footer-note">ASUNCION CHESS 3D <span>•</span> MADE FOR STRATEGISTS</div>
+        </aside>
+      </main>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="promotion-modal hidden" id="promotion-modal">
+        <div class="promotion-box">
+          <h3>Choose promotion</h3>
+          <p>Your pawn reached the final rank.</p>
+          <div class="promotion-options" id="promotion-options"></div>
+          <button class="cancel-promotion" id="cancel-promotion">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
