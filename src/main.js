@@ -374,7 +374,7 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
   return best;
 }
-
+}
 
 function chooseComputerMove() {
   const moves = game.moves({ verbose: true });
@@ -384,14 +384,33 @@ function chooseComputerMove() {
   let bestMoves = [];
 
   for (const move of moves) {
-    const made = game.move(move.san);
-    if (!made) continue;
+    let score = Math.random() * 8;
 
-    let score;
-    try {
-      score = minimax(game, 1, -Infinity, Infinity, false);
-    } finally {
-      game.undo();
+    if (move.captured) {
+      score += (pieceValues[move.captured] || 0) -
+        (pieceValues[move.piece] || 0) * 0.25;
+    }
+
+    if (move.promotion) {
+      score += pieceValues[move.promotion] || 0;
+    }
+
+    const file = "abcdefgh".indexOf(move.to[0]);
+    const rank = Number(move.to[1]);
+
+    const centerDistance =
+      Math.abs(3.5 - file) + Math.abs(3.5 - (rank - 1));
+
+    score += (7 - centerDistance) * 4;
+
+    if (move.flags &&
+        (move.flags.includes("k") || move.flags.includes("q"))) {
+      score += 25;
+    }
+
+    if (move.san &&
+        (move.san.includes("+") || move.san.includes("#"))) {
+      score += 35;
     }
 
     if (score > bestScore) {
@@ -402,7 +421,10 @@ function chooseComputerMove() {
     }
   }
 
-  if (!bestMoves.length) return null;
+  return bestMoves.length
+    ? bestMoves[Math.floor(Math.random() * bestMoves.length)]
+    : null;
+}
 
   return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }
