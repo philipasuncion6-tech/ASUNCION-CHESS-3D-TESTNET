@@ -369,35 +369,15 @@ function minimax(position, depth, alpha, beta, maximizing) {
 }
 
 function chooseComputerMove() {
+  // Piliin muna ang isang legal na galaw.
   const moves = game.moves({ verbose: true });
+
   if (!moves.length) return null;
 
-  let bestScore = -Infinity;
-  let bestMoves = [];
-
-  for (const move of moves) {
-    game.move(move.san);
-
-    let score;
-    try {
-      score = minimax(game, 2, -Infinity, Infinity, false);
-    } finally {
-      game.undo();
-    }
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestMoves = [move];
-    } else if (score === bestScore) {
-      bestMoves.push(move);
-    }
-  }
-
-  return bestMoves.length
-    ? bestMoves[Math.floor(Math.random() * bestMoves.length)]
-    : null;
+  return moves[
+    Math.floor(Math.random() * moves.length)
+  ];
 }
-
 function startComputerMove() {
   if (game.game_over() || game.turn() !== "w" || thinking) {
     render();
