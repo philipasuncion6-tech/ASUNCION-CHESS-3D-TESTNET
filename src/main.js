@@ -424,7 +424,11 @@ function startComputerMove() {
         const move = chooseComputerMove();
         if (!move) throw new Error("No legal computer move found.");
 
-        const played = game.move(move.san);
+        const played = game.move({
+  from: move.from,
+  to: move.to,
+  promotion: move.promotion || "q"
+});
         if (!played) throw new Error("Computer move was rejected.");
       }
     } catch (error) {
