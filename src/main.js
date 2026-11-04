@@ -472,7 +472,7 @@ function updateHistory() {
     row.append(number, white, black);
     moveList.appendChild(row);
   }
-)
+}
 function updatePanels() {
   const whiteToMove = game.turn() === "w";
   const over = game.game_over();
