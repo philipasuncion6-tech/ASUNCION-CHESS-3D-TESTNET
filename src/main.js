@@ -318,13 +318,10 @@ function evaluatePosition(position) {
 
       score += piece.color === "w" ? value : -value;
     }
-  }
 
   return score;
 
 function minimax(position, depth, alpha, beta, maximizing) {
-  if (depth === 0 || position.game_over()) {
-    return evaluatePosition(position);
   }
 
   const moves = position.moves({ verbose: true });
@@ -373,7 +370,6 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
   return best;
 }
-
 function chooseComputerMove() {
   const moves = game.moves({ verbose: true });
   if (!moves.length) return null;
@@ -416,14 +412,13 @@ function chooseComputerMove() {
       bestMoves = [move];
     } else if (score === bestScore) {
       bestMoves.push(move);
-}
+    }
+  }
 
-  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+  return bestMoves.length
+    ? bestMoves[Math.floor(Math.random() * bestMoves.length)]
+    : null;
 
-function startComputerMove() {
-  if (game.game_over() || game.turn() !== "w") {
-    render();
-    return;
   }
 
   thinking = true;
