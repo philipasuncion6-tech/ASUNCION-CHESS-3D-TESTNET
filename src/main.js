@@ -439,8 +439,43 @@ function startComputerMove() {
     }
   }, 450);
 }
+function updateHistory() {
+  const history = game.history({ verbose: true });
+
+  if (!history.length) {
+    moveList.innerHTML =
+      '<div class="empty-history">Moves will appear here.</div>';
+    return;
+  }
+
+  moveList.innerHTML = "";
+
+  for (let i = 0; i < history.length; i += 2) {
+    const whiteMove = history[i];
+    const blackMove = history[i + 1];
 
     const row = document.createElement("div");
+    row.className = "move-row";
+
+    const number = document.createElement("span");
+    number.className = "move-num";
+    number.textContent = `${Math.floor(i / 2) + 1}.`;
+
+    const white = document.createElement("span");
+    white.className = "white-notation";
+    white.textContent = whiteMove.san;
+
+    const black = document.createElement("span");
+    black.className = "black-notation";
+    black.textContent = blackMove ? blackMove.san : "…";
+
+    row.append(number, white, black);
+    moveList.appendChild(row);
+  }
+
+  moveList.scrollTop = moveList.scrollHeight;
+}
+    
     row.className = "move-row";
 
     const number = document.createElement("span");
