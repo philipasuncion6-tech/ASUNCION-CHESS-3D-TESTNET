@@ -334,6 +334,55 @@ function minimax(position, depth, alpha, beta, maximizing) {
     let best = -Infinity;
 
     for (const move of moves) {
+      const made = position.move(move.san);
+      if (!made) continue;
+
+      let score;
+      try {
+        score = minimax(position, depth - 1, alpha, beta, false);
+      } finally {
+        position.undo();
+      }
+
+      best = Math.max(best, score);
+      alpha = Math.max(alpha, best);
+
+      if (beta <= alpha) break;
+    }
+
+    return best;
+  }
+
+  let best = Infinity;
+
+  for (const move of moves) {
+    const made = position.move(move.san);
+    if (!made) continue;
+
+    let score;
+    try {
+      score = minimax(position, depth - 1, alpha, beta, true);
+    } finally {
+      position.undo();
+    }
+
+    best = Math.min(best, score);
+    beta = Math.min(beta, best);
+
+    if (beta <= alpha) break;
+  }
+
+  return best;
+}
+
+  }
+
+  const moves = position.moves({ verbose: true });
+
+  if (maximizing) {
+    let best = -Infinity;
+
+    for (const move of moves) {
       position.move(move.san);
 
       const score = minimax(
