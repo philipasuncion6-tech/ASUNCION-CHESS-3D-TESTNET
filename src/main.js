@@ -378,24 +378,21 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
 function chooseComputerMove() {
   const moves = game.moves({ verbose: true });
-
   if (!moves.length) return null;
 
   let bestScore = -Infinity;
   let bestMoves = [];
 
   for (const move of moves) {
-    game.move(move.san);
+    const made = game.move(move.san);
+    if (!made) continue;
 
-    const score = minimax(
-      game,
-      1,
-      -Infinity,
-      Infinity,
-      false
-    );
-
-    game.undo();
+    let score;
+    try {
+      score = minimax(game, 1, -Infinity, Infinity, false);
+    } finally {
+      game.undo();
+    }
 
     if (score > bestScore) {
       bestScore = score;
@@ -405,9 +402,9 @@ function chooseComputerMove() {
     }
   }
 
-  return bestMoves[
-    Math.floor(Math.random() * bestMoves.length)
-  ];
+  if (!bestMoves.length) return null;
+
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }
 
 function startComputerMove() {
@@ -420,33 +417,28 @@ function startComputerMove() {
   render();
 
   setTimeout(() => {
-    if (!game.game_over() && game.turn() === "w") {
-      const move = chooseComputerMove();
+    let errorMessage = "";
 
-      if (move) {
-        game.move(move.san);
+    try {
+      if (!game.game_over() && game.turn() === "w") {
+        const move = chooseComputerMove();
+        if (!move) throw new Error("No legal computer move found.");
+
+        const played = game.move(move.san);
+        if (!played) throw new Error("Computer move was rejected.");
       }
-    }
+    } catch (error) {
+      console.error("Computer AI error:", error);
+      errorMessage = "Computer error: " + error.message;
+    } finally {
+      thinking = false;
+      clearSelection();
+      render();
 
-    thinking = false;
-    render();
+      if (errorMessage) showToast(errorMessage);
+    }
   }, 450);
 }
-
-function updateHistory() {
-  const history = game.history({ verbose: true });
-
-  if (!history.length) {
-    moveList.innerHTML =
-      '<div class="empty-history">Moves will appear here.</div>';
-    return;
-  }
-
-  moveList.innerHTML = "";
-
-  for (let i = 0; i < history.length; i += 2) {
-    const whiteMove = history[i];
-    const blackMove = history[i + 1];
 
     const row = document.createElement("div");
     row.className = "move-row";
