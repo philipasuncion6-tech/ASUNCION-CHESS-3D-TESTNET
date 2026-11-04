@@ -470,20 +470,6 @@ function updateHistory() {
     black.textContent = blackMove ? blackMove.san : "…";
 
     row.append(number, white, black);
-
-    const number = document.createElement("span");
-    number.className = "move-num";
-    number.textContent = `${Math.floor(i / 2) + 1}.`;
-
-    const white = document.createElement("span");
-    white.className = "white-notation";
-    white.textContent = whiteMove.san;
-
-    const black = document.createElement("span");
-    black.className = "black-notation";
-    black.textContent = blackMove ? blackMove.san : "…";
-
-    row.append(number, white, black);
     moveList.appendChild(row);
   }
 
