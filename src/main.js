@@ -416,11 +416,6 @@ function chooseComputerMove() {
       bestMoves = [move];
     } else if (score === bestScore) {
       bestMoves.push(move);
-    }
-
-  return bestMoves.length
-    ? bestMoves[Math.floor(Math.random() * bestMoves.length)]
-    : null;
 }
 
   return bestMoves[Math.floor(Math.random() * bestMoves.length)];
