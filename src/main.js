@@ -374,7 +374,7 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
   return best;
 }
-}
+
 
 function chooseComputerMove() {
   const moves = game.moves({ verbose: true });
