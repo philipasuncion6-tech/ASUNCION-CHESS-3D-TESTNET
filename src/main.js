@@ -374,58 +374,6 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
   return best;
 }
-
-  }
-
-  const moves = position.moves({ verbose: true });
-
-  if (maximizing) {
-    let best = -Infinity;
-
-    for (const move of moves) {
-      position.move(move.san);
-
-      const score = minimax(
-        position,
-        depth - 1,
-        alpha,
-        beta,
-        false
-      );
-
-      position.undo();
-
-      best = Math.max(best, score);
-      alpha = Math.max(alpha, best);
-
-      if (beta <= alpha) break;
-    }
-
-    return best;
-  }
-
-  let best = Infinity;
-
-  for (const move of moves) {
-    position.move(move.san);
-
-    const score = minimax(
-      position,
-      depth - 1,
-      alpha,
-      beta,
-      true
-    );
-
-    position.undo();
-
-    best = Math.min(best, score);
-    beta = Math.min(beta, best);
-
-    if (beta <= alpha) break;
-  }
-
-  return best;
 }
 
 function chooseComputerMove() {
