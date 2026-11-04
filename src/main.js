@@ -494,9 +494,6 @@ function updateHistory() {
     moveList.appendChild(row);
   }
 
-  moveList.scrollTop = moveList.scrollHeight;
-}
-
 function updatePanels() {
   const whiteToMove = game.turn() === "w";
   const over = game.game_over();
