@@ -637,7 +637,8 @@ function updatePanels() {
   $("side-to-move").textContent =
     whiteToMove ? "White" : "Black";
 
-  $("move-number").textContent = game.move_number();
+  $("move-number").textContent =
+  Math.floor(game.history().length / 2) + 1;
 
   let result = "In progress";
   let title = "Your turn";
