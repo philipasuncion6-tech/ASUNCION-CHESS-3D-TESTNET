@@ -1,4 +1,3 @@
-
 import chessPackage from "chess.js";
 import "./style.css";
 
@@ -51,6 +50,11 @@ let flipped = true;
 let thinking = false;
 let pendingPromotion = null;
 let toastTimer = null;
+let computerMoveToken = 0;
+
+// AI SETTINGS
+const MATE_SCORE = 100000;
+const AI_SEARCH_DEPTH = 3;
 
 function showToast(message) {
   toastElement.textContent = message;
@@ -96,6 +100,7 @@ function renderBoard() {
     : null;
 
   const history = game.history({ verbose: true });
+
   lastMove = history.length
     ? history[history.length - 1]
     : null;
@@ -290,10 +295,15 @@ function closePromotion() {
   promotionModal.classList.remove("show");
 }
 
+// ======================================
+// CHESS AI - POSITION EVALUATION
+// ======================================
 
-function evaluatePosition(position) {
+function evaluatePosition(position, ply = 0) {
   if (position.in_checkmate()) {
-    return position.turn() === "w" ? -100000 : 100000;
+    return position.turn() === "w"
+      ? -MATE_SCORE + ply
+      : MATE_SCORE - ply;
   }
 
   if (position.game_over()) return 0;
@@ -301,29 +311,113 @@ function evaluatePosition(position) {
   let score = 0;
   const rows = position.board();
 
+  let whiteBishops = 0;
+  let blackBishops = 0;
+
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const piece = rows[r][f];
+
       if (!piece) continue;
 
+      const sign = piece.color === "w" ? 1 : -1;
+
       let value = pieceValues[piece.type];
+
       const centerDistance =
         Math.abs(3.5 - f) + Math.abs(3.5 - r);
 
-      value += Math.round((7 - centerDistance) * 3);
-      score += piece.color === "w" ? value : -value;
+      const centerBonus =
+        Math.round((7 - centerDistance) * 3);
+
+      value += centerBonus;
+
+      // Encourage pawn advancement.
+      if (piece.type === "p") {
+        const advance = piece.color === "w"
+          ? 6 - r
+          : r - 1;
+
+        value += Math.max(0, advance) * 7;
+      }
+
+      if (piece.type === "b") {
+        if (piece.color === "w") {
+          whiteBishops++;
+        } else {
+          blackBishops++;
+        }
+      }
+
+      score += sign * value;
     }
+  }
+
+  // Bishop pair bonus.
+  if (whiteBishops >= 2) score += 30;
+  if (blackBishops >= 2) score -= 30;
+
+  return score;
+}
+
+// ======================================
+// MOVE ORDERING
+// ======================================
+
+function moveOrderScore(move) {
+  let score = 0;
+
+  if (move.captured) {
+    score +=
+      10 * pieceValues[move.captured] -
+      pieceValues[move.piece] / 10;
+  }
+
+  if (move.promotion) {
+    score += pieceValues[move.promotion] + 800;
+  }
+
+  if (move.san && move.san.includes("+")) {
+    score += 50;
+  }
+
+  if (move.san && move.san.includes("#")) {
+    score += 100000;
   }
 
   return score;
 }
 
-function minimax(position, depth, alpha, beta, maximizing) {
-  if (depth === 0 || position.game_over()) {
-    return evaluatePosition(position);
+function orderedMoves(position) {
+  return position.moves({ verbose: true })
+    .sort((a, b) => moveOrderScore(b) - moveOrderScore(a));
+}
+
+// ======================================
+// MINIMAX + ALPHA BETA PRUNING
+// ======================================
+
+function minimax(
+  position,
+  depth,
+  alpha,
+  beta,
+  maximizing,
+  ply = 0
+) {
+  if (
+    position.in_checkmate() ||
+    position.game_over() ||
+    depth <= 0
+  ) {
+    return evaluatePosition(position, ply);
   }
 
-  const moves = position.moves({ verbose: true });
+  const moves = orderedMoves(position);
+
+  if (!moves.length) {
+    return evaluatePosition(position, ply);
+  }
 
   if (maximizing) {
     let best = -Infinity;
@@ -332,8 +426,16 @@ function minimax(position, depth, alpha, beta, maximizing) {
       position.move(move.san);
 
       let score;
+
       try {
-        score = minimax(position, depth - 1, alpha, beta, false);
+        score = minimax(
+          position,
+          depth - 1,
+          alpha,
+          beta,
+          false,
+          ply + 1
+        );
       } finally {
         position.undo();
       }
@@ -353,8 +455,16 @@ function minimax(position, depth, alpha, beta, maximizing) {
     position.move(move.san);
 
     let score;
+
     try {
-      score = minimax(position, depth - 1, alpha, beta, true);
+      score = minimax(
+        position,
+        depth - 1,
+        alpha,
+        beta,
+        true,
+        ply + 1
+      );
     } finally {
       position.undo();
     }
@@ -368,30 +478,82 @@ function minimax(position, depth, alpha, beta, maximizing) {
   return best;
 }
 
+// ======================================
+// COMPUTER MOVE SELECTION
+// Computer is WHITE.
+// Player is BLACK.
+// ======================================
+
 function chooseComputerMove() {
-  // Piliin muna ang isang legal na galaw.
-  const moves = game.moves({ verbose: true });
+  const moves = orderedMoves(game);
 
   if (!moves.length) return null;
 
-  return moves[
-    Math.floor(Math.random() * moves.length)
-  ];
+  let bestScore = -Infinity;
+  let bestMoves = [];
+
+  for (const move of moves) {
+    game.move(move.san);
+
+    let score;
+
+    try {
+      score = minimax(
+        game,
+        AI_SEARCH_DEPTH - 1,
+        -Infinity,
+        Infinity,
+        false,
+        1
+      );
+    } finally {
+      game.undo();
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestMoves = [move];
+    } else if (score === bestScore) {
+      bestMoves.push(move);
+    }
+  }
+
+  // Random only among equally strong moves.
+  return bestMoves[
+    Math.floor(Math.random() * bestMoves.length)
+  ] || moves[0];
 }
+
+// ======================================
+// COMPUTER TURN
+// ======================================
+
 function startComputerMove() {
-  if (game.game_over() || game.turn() !== "w" || thinking) {
+  if (
+    game.game_over() ||
+    game.turn() !== "w" ||
+    thinking
+  ) {
     render();
     return;
   }
+
+  const token = ++computerMoveToken;
 
   thinking = true;
   render();
 
   setTimeout(() => {
+    // Ignore an old delayed move after New Game or Undo.
+    if (token !== computerMoveToken) return;
+
     let errorMessage = "";
 
     try {
-      if (!game.game_over() && game.turn() === "w") {
+      if (
+        !game.game_over() &&
+        game.turn() === "w"
+      ) {
         const move = chooseComputerMove();
 
         if (!move) {
@@ -412,14 +574,23 @@ function startComputerMove() {
       console.error("Computer AI error:", error);
       errorMessage = "Computer error: " + error.message;
     } finally {
-      thinking = false;
-      clearSelection();
-      render();
+      if (token === computerMoveToken) {
+        thinking = false;
+        clearSelection();
+        render();
 
-      if (errorMessage) showToast(errorMessage);
+        if (errorMessage) {
+          showToast(errorMessage);
+        }
+      }
     }
-  }, 450);
+  }, 250);
 }
+
+// ======================================
+// MOVE HISTORY
+// ======================================
+
 function updateHistory() {
   const history = game.history({ verbose: true });
 
@@ -454,6 +625,11 @@ function updateHistory() {
     moveList.appendChild(row);
   }
 }
+
+// ======================================
+// GAME STATUS AND PANELS
+// ======================================
+
 function updatePanels() {
   const whiteToMove = game.turn() === "w";
   const over = game.game_over();
@@ -515,8 +691,15 @@ function updatePanels() {
   playerTurn.textContent =
     !whiteToMove && !over ? "YOUR TURN" : "WAIT";
 
-  computerTurn.classList.toggle("active", whiteToMove && !over);
-  playerTurn.classList.toggle("active", !whiteToMove && !over);
+  computerTurn.classList.toggle(
+    "active",
+    whiteToMove && !over
+  );
+
+  playerTurn.classList.toggle(
+    "active",
+    !whiteToMove && !over
+  );
 
   thinkingDots.classList.toggle("visible", thinking);
 }
@@ -527,7 +710,13 @@ function render() {
   updateHistory();
 }
 
+// ======================================
+// NEW GAME
+// ======================================
+
 function newGame() {
+  computerMoveToken++;
+
   game.reset();
 
   clearSelection();
@@ -536,10 +725,16 @@ function newGame() {
   thinking = false;
 
   render();
+
   showToast("New game started!");
 
+  // Computer plays White first.
   startComputerMove();
 }
+
+// ======================================
+// UNDO
+// ======================================
 
 function undoMove() {
   if (thinking || pendingPromotion) return;
@@ -549,29 +744,46 @@ function undoMove() {
     return;
   }
 
-  // Remove the computer's last move.
+  computerMoveToken++;
+
+  // Remove computer's last move.
   game.undo();
 
-  // If the player had already moved, undo that move too.
-  if (game.turn() === "b" && game.history().length > 0) {
+  // Remove player's previous move too.
+  if (
+    game.turn() === "b" &&
+    game.history().length > 0
+  ) {
     game.undo();
   }
 
   clearSelection();
   closePromotion();
+
   thinking = false;
 
   render();
+
   showToast("Previous turn restored.");
 }
+
+// ======================================
+// FLIP BOARD
+// ======================================
 
 function flipBoard() {
   flipped = !flipped;
   renderBoard();
 }
 
+// ======================================
+// BUTTON EVENTS
+// ======================================
+
 $("new-game").addEventListener("click", newGame);
+
 $("undo").addEventListener("click", undoMove);
+
 $("flip").addEventListener("click", flipBoard);
 
 $("cancel-promotion").addEventListener("click", () => {
@@ -580,6 +792,12 @@ $("cancel-promotion").addEventListener("click", () => {
   renderBoard();
 });
 
-// Start the game. Computer plays White first.
+// ======================================
+// START GAME
+// ======================================
+
+// Computer plays White first.
+// Player controls Black.
+
 render();
 startComputerMove();
