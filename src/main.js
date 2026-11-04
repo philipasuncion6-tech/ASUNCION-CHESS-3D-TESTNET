@@ -290,14 +290,13 @@ function closePromotion() {
   promotionModal.classList.remove("show");
 }
 
+
 function evaluatePosition(position) {
   if (position.in_checkmate()) {
     return position.turn() === "w" ? -100000 : 100000;
   }
 
-  if (position.game_over()) {
-    return 0;
-  }
+  if (position.game_over()) return 0;
 
   let score = 0;
   const rows = position.board();
@@ -305,23 +304,23 @@ function evaluatePosition(position) {
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const piece = rows[r][f];
-
       if (!piece) continue;
 
       let value = pieceValues[piece.type];
-
-      // Small center-control bonus.
       const centerDistance =
         Math.abs(3.5 - f) + Math.abs(3.5 - r);
 
       value += Math.round((7 - centerDistance) * 3);
-
       score += piece.color === "w" ? value : -value;
     }
+  }
 
   return score;
+}
 
 function minimax(position, depth, alpha, beta, maximizing) {
+  if (depth === 0 || position.game_over()) {
+    return evaluatePosition(position);
   }
 
   const moves = position.moves({ verbose: true });
@@ -330,8 +329,7 @@ function minimax(position, depth, alpha, beta, maximizing) {
     let best = -Infinity;
 
     for (const move of moves) {
-      const made = position.move(move.san);
-      if (!made) continue;
+      position.move(move.san);
 
       let score;
       try {
@@ -352,8 +350,7 @@ function minimax(position, depth, alpha, beta, maximizing) {
   let best = Infinity;
 
   for (const move of moves) {
-    const made = position.move(move.san);
-    if (!made) continue;
+    position.move(move.san);
 
     let score;
     try {
@@ -370,6 +367,7 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
   return best;
 }
+
 function chooseComputerMove() {
   const moves = game.moves({ verbose: true });
   if (!moves.length) return null;
@@ -378,33 +376,13 @@ function chooseComputerMove() {
   let bestMoves = [];
 
   for (const move of moves) {
-    let score = Math.random() * 8;
+    game.move(move.san);
 
-    if (move.captured) {
-      score += (pieceValues[move.captured] || 0) -
-        (pieceValues[move.piece] || 0) * 0.25;
-    }
-
-    if (move.promotion) {
-      score += pieceValues[move.promotion] || 0;
-    }
-
-    const file = "abcdefgh".indexOf(move.to[0]);
-    const rank = Number(move.to[1]);
-
-    const centerDistance =
-      Math.abs(3.5 - file) + Math.abs(3.5 - (rank - 1));
-
-    score += (7 - centerDistance) * 4;
-
-    if (move.flags &&
-        (move.flags.includes("k") || move.flags.includes("q"))) {
-      score += 25;
-    }
-
-    if (move.san &&
-        (move.san.includes("+") || move.san.includes("#"))) {
-      score += 35;
+    let score;
+    try {
+      score = minimax(game, 2, -Infinity, Infinity, false);
+    } finally {
+      game.undo();
     }
 
     if (score > bestScore) {
@@ -418,7 +396,12 @@ function chooseComputerMove() {
   return bestMoves.length
     ? bestMoves[Math.floor(Math.random() * bestMoves.length)]
     : null;
+}
 
+function startComputerMove() {
+  if (game.game_over() || game.turn() !== "w" || thinking) {
+    render();
+    return;
   }
 
   thinking = true;
@@ -430,14 +413,20 @@ function chooseComputerMove() {
     try {
       if (!game.game_over() && game.turn() === "w") {
         const move = chooseComputerMove();
-        if (!move) throw new Error("No legal computer move found.");
+
+        if (!move) {
+          throw new Error("No legal computer move found.");
+        }
 
         const played = game.move({
-  from: move.from,
-  to: move.to,
-  promotion: move.promotion || "q"
-});
-        if (!played) throw new Error("Computer move was rejected.");
+          from: move.from,
+          to: move.to,
+          promotion: move.promotion || "q"
+        });
+
+        if (!played) {
+          throw new Error("Computer move was rejected.");
+        }
       }
     } catch (error) {
       console.error("Computer AI error:", error);
