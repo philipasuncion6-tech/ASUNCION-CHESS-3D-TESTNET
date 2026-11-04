@@ -374,7 +374,6 @@ function minimax(position, depth, alpha, beta, maximizing) {
 
   return best;
 }
-}
 
 function chooseComputerMove() {
   const moves = game.moves({ verbose: true });
@@ -419,7 +418,6 @@ function chooseComputerMove() {
     } else if (score === bestScore) {
       bestMoves.push(move);
     }
-  }
 
   return bestMoves.length
     ? bestMoves[Math.floor(Math.random() * bestMoves.length)]
