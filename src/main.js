@@ -321,7 +321,6 @@ function evaluatePosition(position) {
   }
 
   return score;
-}
 
 function minimax(position, depth, alpha, beta, maximizing) {
   if (depth === 0 || position.game_over()) {
@@ -425,7 +424,6 @@ function chooseComputerMove() {
 }
 
   return bestMoves[Math.floor(Math.random() * bestMoves.length)];
-}
 
 function startComputerMove() {
   if (game.game_over() || game.turn() !== "w") {
