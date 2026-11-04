@@ -470,13 +470,6 @@ function updateHistory() {
     black.textContent = blackMove ? blackMove.san : "…";
 
     row.append(number, white, black);
-    moveList.appendChild(row);
-  }
-
-  moveList.scrollTop = moveList.scrollHeight;
-}
-    
-    row.className = "move-row";
 
     const number = document.createElement("span");
     number.className = "move-num";
