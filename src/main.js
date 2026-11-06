@@ -1,5 +1,6 @@
 import chessPackage from "chess.js";
 import "./style.css";
+import "./royal-diamond.css";
 
 const Chess =
   chessPackage.Chess ||
